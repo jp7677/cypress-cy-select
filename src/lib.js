@@ -21,17 +21,20 @@ export const formatSelectors = (
   { name = 'cy', prefix = 'data-', separator = '|' } = {},
 ) => {
   const shortNotation = name + separator
-  const attr = prefix + name
   if (!selectors.includes(shortNotation)) return selectors
+
+  const escapedName = name.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+  const escapedSeparator = separator.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&')
+  const regexp = new RegExp(`^(${escapedName}${escapedSeparator})([\\w-]+)(\S*)`)
+  const attr = prefix + name
+
+  const formatted = []
   selectors.split(' ').forEach(selector => {
-    if (selector === '>') return
-    if (selector.startsWith(name)) {
-      const value = selector.replace(shortNotation, '')
-      selectors = selectors.replace(
-        `${shortNotation}${value}`,
-        `[${attr}=\"${value}\"]`,
-      )
+    if (selector.length === 1) {
+      formatted.push(selector)
+    } else {
+      formatted.push(selector.replace(regexp, `[${attr}=\"$2\"]$3`))
     }
   })
-  return selectors
+  return formatted.join(' ')
 }
